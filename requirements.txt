@@ -1,0 +1,7 @@
+flask
+requests
+polyline
+geopy
+firebase-admin
+python-dotenv
+flask-cors
