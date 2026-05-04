@@ -54,7 +54,7 @@ function startSimulation(riskSegments, mapInstance, markerInstance) {
         }
 
         // Optional: Pan map to follow car ONLY if user isn't trying to zoom/drag
-        if (typeof isUserInteracting !== 'undefined' && !isUserInteracting) {
+        if (!window.isUserInteracting) {
             mapInstance.panTo(currentPos);
         }
 
@@ -87,11 +87,15 @@ function checkRiskProximity(userPos, alertZones, currentIdx) {
     });
 
     const alertBox = document.getElementById("risk-alert");
+    if (!alertBox) return;
 
     if (nearestRiskDist <= ALERT_THRESHOLD_METERS && closestZoneLevel) {
         alertBox.classList.remove("hidden");
         const distText = nearestRiskDist < 1000 ? `${Math.round(nearestRiskDist)}m` : `${(nearestRiskDist / 1000).toFixed(1)}km`;
-        alertBox.querySelector("h4").textContent = `${closestZoneLevel} Risk Zone Ahead`;
+        
+        const header = alertBox.querySelector("h4");
+        if (header) header.textContent = `${closestZoneLevel} Risk Zone Ahead`;
+        
         alertBox.querySelector("p").textContent = `Approaching in ${distText}. Please be careful.`;
         
         if (closestZoneLevel === 'HIGH') {

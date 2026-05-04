@@ -9,67 +9,188 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <style>
+        :root {
+            --glass: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #3b82f6;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            height: 100vh;
+            overflow: hidden;
+        }
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .primary-glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transition: all 0.3s ease;
+        }
+        .primary-glow:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            transform: translateY(-1px);
+        }
+        #map {
+            height: 100vh;
+            width: 100vw;
+            z-index: 1;
+        }
+        .custom-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: border-color 0.3s ease;
+        }
+        .custom-input:focus {
+            border-color: var(--accent);
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .alert-glow-red {
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.95; }
+        }
+        /* Hide Leaflet controls we don't want or style them */
+        .leaflet-control-container .leaflet-top.leaflet-right {
+            margin-top: 80px;
+        }
+    </style>
 </head>
 
-<body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="brand">
-                <h1>Safe<span>Route</span></h1>
-                <p>Geometric Risk Intelligence</p>
+<body class="text-slate-200">
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 z-[1000] glass-panel px-6 py-3 flex items-center justify-between border-b border-white/10">
+        <div class="flex items-center gap-2">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i data-lucide="shield-check" class="text-white w-6 h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white leading-none">Safe<span class="text-blue-500">Route</span></h1>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-semibold">Risk Intelligence System</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-6 text-sm font-medium text-slate-400">
+            <a href="/admin" class="hover:text-white transition-colors">Dashboard</a>
+            <a href="#" class="hover:text-white transition-colors">Analytics</a>
+            <div class="h-4 w-[1px] bg-white/10"></div>
+            <div class="flex items-center gap-2 text-white">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                System Active
+            </div>
+        </div>
+    </nav>
+
+    <main class="relative h-screen w-full">
+        <!-- Map Container -->
+        <div id="map"></div>
+
+        <!-- Floating Controls Panel -->
+        <aside class="fixed top-24 left-6 z-[999] w-80 flex flex-col gap-4">
+            <!-- Search Card -->
+            <div class="glass-panel rounded-2xl p-5 overflow-hidden">
+                <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i data-lucide="navigation-2" class="w-4 h-4"></i> Route Planning
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="text-xs text-slate-500 ml-1 mb-1 block">Origin</label>
+                        <div class="relative">
+                            <input type="text" id="source" class="custom-input w-full rounded-xl px-4 py-3 pr-10 text-sm" placeholder="Search starting point...">
+                            <button id="get-location-btn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors" title="Use current location">
+                                <i data-lucide="locate-fixed" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <label class="text-xs text-slate-500 ml-1 mb-1 block">Destination</label>
+                        <input type="text" id="destination" class="custom-input w-full rounded-xl px-4 py-3 text-sm" placeholder="Search destination...">
+                    </div>
+
+                    <!-- Mode Selection -->
+                    <div class="flex bg-white/5 rounded-xl p-1 gap-1">
+                        <button class="mode-btn active flex-1 flex items-center justify-center py-2 rounded-lg bg-blue-600 text-white transition-all shadow-lg" data-mode="driving">
+                            <i data-lucide="car" class="w-4 h-4"></i>
+                        </button>
+                        <button class="mode-btn flex-1 flex items-center justify-center py-2 rounded-lg text-slate-400 hover:bg-white/5 transition-all" data-mode="bike">
+                            <i data-lucide="bike" class="w-4 h-4"></i>
+                        </button>
+                        <button class="mode-btn flex-1 flex items-center justify-center py-2 rounded-lg text-slate-400 hover:bg-white/5 transition-all" data-mode="walk">
+                            <i data-lucide="footprints" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <button id="find-route-btn" class="primary-btn primary-glow w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 mt-2">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Analyze Route
+                    </button>
+                </div>
             </div>
 
-            <div class="search-panel">
-                <div class="input-group">
-                    <label>Source</label>
-                    <input type="text" id="source" placeholder="Enter starting point">
-                </div>
-                <div class="input-group">
-                    <label>Destination</label>
-                    <input type="text" id="destination" placeholder="Enter destination">
-                </div>
+            <!-- Stats Panel -->
+            <div id="route-stats" class="glass-panel rounded-2xl p-5 hidden animate-in slide-in-from-left duration-500">
+                <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Route Intelligence</h2>
+                
+                <div class="space-y-3">
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-emerald-400 uppercase font-bold">Safest Choice</p>
+                            <h3 id="safe-time" class="text-lg font-bold text-white">-- min</h3>
+                        </div>
+                        <span id="safe-risk" class="text-xs font-semibold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-lg">Low Risk</span>
+                    </div>
 
-                <button id="find-route-btn" class="primary-btn">Analyze Route</button>
+                    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-blue-400 uppercase font-bold">Fastest Path</p>
+                            <h3 id="fast-time" class="text-lg font-bold text-white">-- min</h3>
+                        </div>
+                        <span id="fast-risk" class="text-xs font-semibold bg-blue-500/20 text-blue-400 px-2 py-1 rounded-lg">High Risk</span>
+                    </div>
+                </div>
             </div>
 
-            <div id="route-stats" class="stats-panel hidden">
-                <div class="stat-card safe-choice">
-                    <h3>Safest Route</h3>
-                    <div class="details">
-                        <span id="safe-time">-- min</span>
-                        <span id="safe-risk">Low Risk</span>
-                    </div>
-                </div>
-                <div class="stat-card fast-choice">
-                    <h3>Fastest Route</h3>
-                    <div class="details">
-                        <span id="fast-time">-- min</span>
-                        <span id="fast-risk">High Risk</span>
-                    </div>
-                </div>
-                <!-- Action Buttons -->
-                <div id="action-buttons" style="display: none; flex-direction: column; gap: 10px; margin-top: 1rem;">
-                    <button id="start-simulation-btn" class="primary-btn" style="background-color: var(--success);">Start Simulation</button>
-                    <button id="download-report-btn" class="primary-btn" style="background-color: var(--warning); color: #000;">Download Risk Report</button>
-                </div>
+            <!-- Action Buttons Panel -->
+            <div id="action-buttons" class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <i data-lucide="play-circle" class="w-4 h-4"></i> Quick Actions
+                </h2>
+                <button id="start-simulation-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i data-lucide="play" class="w-4 h-4"></i> Start Simulation
+                </button>
+                <button id="download-report-btn" class="w-full bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i data-lucide="download" class="w-4 h-4"></i> Download Report
+                </button>
             </div>
         </aside>
 
-        <!-- Map Container -->
-        <main class="map-wrapper">
-            <div id="map"></div>
-            <!-- Alert Overlay -->
-            <div id="risk-alert" class="alert-box hidden">
-                <div class="alert-icon">⚠️</div>
-                <div class="alert-content">
-                    <h4>High Risk Zone Ahead</h4>
-                    <p>Sharp curve approaching in 1km. Reduce speed.</p>
+        <!-- Alert Overlay (Floating Bottom Center) -->
+        <div id="risk-alert" class="fixed bottom-6 inset-x-4 md:inset-x-auto md:bottom-10 md:left-1/2 md:-translate-x-1/2 z-[1001] hidden md:min-w-[340px] pointer-events-none">
+            <div class="alert-glow-red glass-panel rounded-2xl p-4 flex items-center gap-4 border-l-4 border-l-red-500 bg-red-950/40">
+                <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 animate-pulse">
+                    <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white text-lg leading-tight tracking-tight">Risk Zone Detected</h4>
+                    <p class="text-sm text-red-200/80">Sharp curve approaching. Reduce speed now.</p>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <!-- Leaflet JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -77,6 +198,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <script>
+        lucide.createIcons();
+    </script>
     <script src="{{ url_for('static', filename='js/alert_system.js') }}?v=1.1"></script>
     <script src="{{ url_for('static', filename='js/map_core.js') }}?v=1.1"></script>
 </body>

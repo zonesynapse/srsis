@@ -18,8 +18,17 @@ def get_safe_route():
         if not origin_query or not dest_query:
             return jsonify({'error': 'Source and destination are required'}), 400
             
-        # 1. Geocode Source and Destination
-        start_coords = NominatimService.get_coordinates(origin_query)
+        # 1. Handle coordinates or Geocode Source
+        # Check if origin is a coordinate pair (lat,lng)
+        if ',' in origin_query and any(c.isdigit() for c in origin_query):
+            try:
+                lat, lng = map(float, origin_query.split(','))
+                start_coords = {'lat': lat, 'lng': lng}
+            except (ValueError, IndexError):
+                start_coords = NominatimService.get_coordinates(origin_query)
+        else:
+            start_coords = NominatimService.get_coordinates(origin_query)
+            
         if not start_coords:
             return jsonify({'error': f"Could not find location: '{origin_query}'"}), 404
             

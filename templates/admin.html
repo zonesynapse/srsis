@@ -5,53 +5,227 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - SafeRoute</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --glass: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #3b82f6;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            color: #e2e8f0; /* slate-200 */
+        }
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .primary-glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            transition: all 0.3s ease;
+        }
+        .primary-glow:hover {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            transform: translateY(-2px); /* Slightly more pronounced hover for cards */
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
 </head>
 
-<body>
-    <div class="admin-container">
-        <header class="admin-header">
-            <h1>SafeRoute Admin</h1>
-            <nav>
-                <a href="/">Back to Map</a>
-            </nav>
-        </header>
+<body class="text-slate-200">
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 z-[1000] glass-panel px-4 md:px-6 py-3 flex items-center justify-between border-b border-white/10">
+        <div class="flex items-center gap-4">
+            <a href="/" class="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                <span class="hidden sm:inline">Back to Map</span>
+            </a>
+            <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg md:rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <i data-lucide="shield-check" class="text-white w-5 h-5 md:w-6 md:h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-lg md:text-xl font-bold tracking-tight text-white leading-none">Safe<span class="text-blue-500">Route</span></h1>
+                <p class="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-semibold">Admin Dashboard</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 text-white text-xs md:text-sm">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+            <span class="hidden sm:inline">System Active</span>
+        </div>
+    </nav>
 
-        <main class="dashboard-grid">
-            <div class="card">
-                <h2>Regional Risk Map</h2>
-                <div id="admin-map" style="height: 300px; background: #222;"></div>
+    <main class="container mx-auto px-4 py-24 md:py-28">
+        <!-- Dashboard Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <!-- Card 1: Total Routes Analyzed -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col items-start justify-between primary-glow">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-3 bg-blue-600/20 rounded-full text-blue-400">
+                        <i data-lucide="route" class="w-6 h-6"></i>
+                    </div>
+                    <h3 id="total-routes-analyzed" class="text-4xl font-bold text-white">--</h3>
+                </div>
+                <p class="text-sm text-slate-400 uppercase tracking-wider">Total Routes Analyzed</p>
             </div>
 
-            <div class="card">
-                <h2>Top High-Risk Segments</h2>
-                <ul id="risk-list">
-                    <li>Loading...</li>
+            <!-- Card 2: High Risk Segments Count -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col items-start justify-between primary-glow">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-3 bg-red-600/20 rounded-full text-red-400">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <h3 id="high-risk-segments" class="text-4xl font-bold text-white">--</h3>
+                </div>
+                <p class="text-sm text-slate-400 uppercase tracking-wider">High Risk Segments</p>
+            </div>
+
+            <!-- Card 3: Average Risk Score -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col items-start justify-between primary-glow">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-3 bg-yellow-600/20 rounded-full text-yellow-400">
+                        <i data-lucide="gauge" class="w-6 h-6"></i>
+                    </div>
+                    <h3 id="avg-risk-score" class="text-4xl font-bold text-white">0.00</h3>
+                </div>
+                <p class="text-sm text-slate-400 uppercase tracking-wider">Average Risk Score</p>
+            </div>
+
+            <!-- Card 4: Active Sessions -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col items-start justify-between primary-glow">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-3 bg-emerald-600/20 rounded-full text-emerald-400">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <h3 id="active-sessions" class="text-4xl font-bold text-white">7</h3>
+                </div>
+                <p class="text-sm text-slate-400 uppercase tracking-wider">Active Sessions</p>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+            <!-- Risk Distribution Section -->
+            <section class="glass-panel rounded-2xl p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-5 h-5 text-blue-400"></i> Risk Distribution
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <span class="w-20 text-sm text-slate-300">High Risk</span>
+                        <div class="w-full bg-slate-700 rounded-full h-3">
+                            <div id="risk-distribution-high" class="bg-red-500 h-full rounded-full" style="width: 35%;"></div>
+                        </div>
+                        <span class="w-10 text-sm text-slate-300 text-right">35%</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="w-20 text-sm text-slate-300">Medium Risk</span>
+                        <div class="w-full bg-slate-700 rounded-full h-3">
+                            <div id="risk-distribution-medium" class="bg-yellow-500 h-full rounded-full" style="width: 40%;"></div>
+                        </div>
+                        <span class="w-10 text-sm text-slate-300 text-right">40%</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="w-20 text-sm text-slate-300">Low Risk</span>
+                        <div class="w-full bg-slate-700 rounded-full h-3">
+                            <div id="risk-distribution-low" class="bg-emerald-500 h-full rounded-full" style="width: 25%;"></div>
+                        </div>
+                        <span class="w-10 text-sm text-slate-300 text-right">25%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Top Risky Segments (from existing admin_dashboard.js) -->
+            <section class="glass-panel rounded-2xl p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-5 h-5 text-red-400"></i> Top Risky Segments
+                </h2>
+                <ul id="risk-list" class="space-y-3 text-sm text-slate-300">
+                    <!-- Populated by admin_dashboard.js -->
+                    <li><strong>#1 Route 66 - Bend 4</strong> - Risk Score: <span class="text-red-400">0.95</span></li>
+                    <li><strong>#2 Downtown Crossing</strong> - Risk Score: <span class="text-red-400">0.88</span></li>
+                    <li><strong>#3 Mountain Pass Descent</strong> - Risk Score: <span class="text-yellow-400">0.72</span></li>
                 </ul>
-            </div>
+            </section>
+        </div>
 
-            <div class="card">
-                <h2>Risk Weight Adjustment</h2>
-                <div class="control-group">
-                    <label>Curve Severity Weight</label>
-                    <input type="range" min="0" max="1" step="0.1" value="0.7">
-                </div>
-                <div class="control-group">
-                    <label>Weather Weight</label>
-                    <input type="range" min="0" max="1" step="0.1" value="0.3">
-                </div>
-                <button class="secondary-btn">Update Model</button>
+        <!-- Recent Activity Section -->
+        <section class="glass-panel rounded-2xl p-6">
+            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i> Recent Route Analyses
+            </h2>
+            <div class="overflow-x-auto no-scrollbar">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="py-3 px-4 font-medium text-slate-400">Source</th>
+                            <th class="py-3 px-4 font-medium text-slate-400">Destination</th>
+                            <th class="py-3 px-4 font-medium text-slate-400">Risk Score</th>
+                            <th class="py-3 px-4 font-medium text-slate-400">Route Type</th>
+                            <th class="py-3 px-4 font-medium text-slate-400">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-activity-table">
+                        <!-- Dummy Data -->
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td class="py-3 px-4">Chennai</td>
+                            <td class="py-3 px-4">Coimbatore</td>
+                            <td class="py-3 px-4 text-emerald-400">0.21</td>
+                            <td class="py-3 px-4 text-emerald-400">Safest</td>
+                            <td class="py-3 px-4 text-slate-400">2 min ago</td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td class="py-3 px-4">Madurai</td>
+                            <td class="py-3 px-4">Trichy</td>
+                            <td class="py-3 px-4 text-red-400">0.78</td>
+                            <td class="py-3 px-4 text-blue-400">Fastest</td>
+                            <td class="py-3 px-4 text-slate-400">15 min ago</td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td class="py-3 px-4">Bangalore</td>
+                            <td class="py-3 px-4">Chennai</td>
+                            <td class="py-3 px-4 text-yellow-400">0.45</td>
+                            <td class="py-3 px-4 text-emerald-400">Safest</td>
+                            <td class="py-3 px-4 text-slate-400">1 hour ago</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="py-3 px-4">Coimbatore</td>
+                            <td class="py-3 px-4">Ooty</td>
+                            <td class="py-3 px-4 text-red-400">0.89</td>
+                            <td class="py-3 px-4 text-blue-400">Fastest</td>
+                            <td class="py-3 px-4 text-slate-400">3 hours ago</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </main>
-    </div>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <!-- Leaflet JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+        </section>
 
+        <!-- Admin Map (from existing admin_dashboard.js) -->
+        <section class="glass-panel rounded-2xl p-6 mt-10">
+            <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                <i data-lucide="map" class="w-5 h-5 text-purple-400"></i> Global Risk Overview
+            </h2>
+            <div id="admin-map" class="w-full h-[400px] rounded-xl overflow-hidden"></div>
+        </section>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
     <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
 </body>
 

@@ -13,9 +13,16 @@ async function fetchStats() {
         const listContainer = document.getElementById("risk-list");
         listContainer.innerHTML = '';
 
+        // Update Dashboard Cards
+        document.getElementById("total-routes-analyzed").textContent = data.total_routes_analyzed.toLocaleString();
+        document.getElementById("high-risk-segments").textContent = data.high_risk_zones_identified.toLocaleString();
+        // For avg-risk-score and active-sessions, using static data in HTML for now as API doesn't provide
+        // document.getElementById("avg-risk-score").textContent = (data.avg_risk_score || 0).toFixed(2);
+        // document.getElementById("active-sessions").textContent = data.active_sessions || 0;
+
         data.top_risky_segments.forEach((seg, idx) => {
             const li = document.createElement("li");
-            li.innerHTML = `<strong>#${idx + 1} ${seg.location}</strong> - Risk Score: <span style="color:red">${seg.score}</span>`;
+            li.innerHTML = `<strong>#${idx + 1} ${seg.location}</strong> - Risk Score: <span class="${seg.score > 0.7 ? 'text-red-400' : 'text-yellow-400'}">${seg.score}</span>`;
             listContainer.appendChild(li);
         });
 
